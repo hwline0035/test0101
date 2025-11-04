@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 QT 홈페이지</title>
+
+    <!-- favicon 삽입  https://realfavicongenerator.net/ 에서 포토샵에서 512*512px 제작한 이미지는 업로드(drop your fivicon image here) -->
+
+    <link rel="icon" type="image/png" href="./favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="./favicon/favicon.svg" />
+    <link rel="shortcut icon" href="./favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="./favicon/site.webmanifest" />
+
+    <link rel="stylesheet" href="./css/common.css">
+    <link rel="stylesheet" href="./css/style_1.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+</head>
+
+<body>
+
+    <header>
+        <nav class="row1">
+            <div class="row1_1">
+                <h1>Wook's paper</h1>
+            </div>
+            <div class="row1_2">
+
+                <p class="qt"> <a href="" class="toLeftBtn" title="성경창을 크게"><i class="fa-solid fa-play"></i></a>
+                    <a href="creator.html" target="_blank" title="QT기록하고 싶으면 클릭">오늘의 QT</a>
+                </p>
+                <p class="reading"><a href="https://www.bskorea.or.kr/bible/korbibReadpage.php" target="_blank"
+                        title="대한성서공회로 이동">성경읽기</a><a href="" class="toRightBtn" title="QT창을 크게"><i
+                            class="fa-solid fa-play"></i></a></p>
+
+            </div>
+
+        </nav>
+        <nav class="row2">
+            <button class="menu-toggle" data-target="new">신약</button>
+            <button class="menu-toggle" data-target="old">구약</button>
+        </nav>
+        <div id="row3-container">
+            <div id="new-testament-books" class="book-list-wrapper"></div>
+            <div id="old-testament-books" class="book-list-wrapper"></div>
+        </div>
+    </header>
+
+    <main id="main-container">
+
+        <aside id="chapter-list">
+            <p>책을 선택하면 여기에 장 목록이 표시됩니다.</p>
+        </aside>
+
+        <section id="main-content">
+
+            <div id="qt-pane" class="content-pane">
+                <p>장을 선택하면 여기에 QT 묵상이 표시됩니다.</p>
+                <iframe id="qt-frame" src="" frameborder="0"></iframe>
+            </div>
+
+            <div id="resizer"></div>
+
+            <div id="bible-pane" class="content-pane">
+                <p>장을 선택하면 여기에 성경 본문이 표시됩니다.</p>
+                <iframe id="bible-frame" src="" frameborder="0"></iframe>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script>
+
+        // 화살표 버튼으로 10px씩 조정하는 코딩
+        $('.toLeftBtn').click(function (e) {
+            e.preventDefault();
+            let currentBasisString = $('#qt-pane').css('flex-basis');
+            let currentBasisValue = parseFloat(currentBasisString);
+            let newBasisValue = currentBasisValue - 5;
+            if (newBasisValue <= 80 && newBasisValue >= 20) {
+                $('#qt-pane').removeClass('on').removeClass('off').siblings().removeClass('on').removeClass('off');
+                $('#qt-pane').css('flex-basis', newBasisValue + '%');
+            }
+        });
+
+        $('.toRightBtn').click(function (e) {
+            e.preventDefault();
+            let currentBasisString = $('#qt-pane').css('flex-basis');
+            let currentBasisValue = parseFloat(currentBasisString);
+            let newBasisValue = currentBasisValue + 5;
+            if (newBasisValue <= 80 && newBasisValue >= 20) {
+                $('#qt-pane').removeClass('on').removeClass('off').siblings().removeClass('on').removeClass('off');
+                $('#qt-pane').css('flex-basis', newBasisValue + '%');
+            }
+        });
+
+        // --- 1. 데이터 정의 ---
+
+        // 성경 책 데이터 (변경 없음)
+        const BIBLE_DATA = {
+            newTestament: [{ id: '마', name: '마태복음', chapters: 28 },
+            { id: '막', name: '마가복음', chapters: 16 },
+            { id: '눅', name: '누가복음', chapters: 24 },
+            { id: '요', name: '요한복음', chapters: 21 },
+            { id: '행', name: '사도행전', chapters: 28 },
+            { id: '롬', name: '로마서', chapters: 16 },
+            { id: '고전', name: '고린도전서', chapters: 16 },
+            { id: '고후', name: '고린도후서', chapters: 13 },
+            { id: '갈', name: '갈라디아서', chapters: 6 },
+            { id: '엡', name: '에베소서', chapters: 6 },
+            { id: '빌', name: '빌립보서', chapters: 4 },
+            { id: '골', name: '골로새서', chapters: 4 },
+            { id: '살전', name: '데살로니가전서', chapters: 5 },
+            { id: '살후', name: '데살로니가후서', chapters: 3 },
+            { id: '딤전', name: '디모데전서', chapters: 6 },
+            { id: '딤후', name: '디모데후서', chapters: 4 },
+            { id: '딛', name: '디도서', chapters: 3 },
+            { id: '몬', name: '빌레몬서', chapters: 1 },
+            { id: '히', name: '히브리서', chapters: 13 },
+            { id: '약', name: '야고보서', chapters: 5 },
+            { id: '벧전', name: '베드로전서', chapters: 5 },
+            { id: '벧후', name: '베드로후서', chapters: 3 },
+            { id: '요일', name: '요한일서', chapters: 5 },
+            { id: '요이', name: '요한이서', chapters: 13 },
+            { id: '요삼', name: '요한삼서', chapters: 15 },
+            { id: '유', name: '유다서', chapters: 1 },
+            { id: '계', name: '요한계시록', chapters: 22 }],
+            oldTestament: [
+                { id: '창', name: '창세기', chapters: 50 },
+                { id: '출', name: '출애굽기', chapters: 40 },
+                { id: '레', name: '레위기', chapters: 27 },
+                { id: '민', name: '민수기', chapters: 36 },
+                { id: '신', name: '신명기', chapters: 34 },
+                { id: '수', name: '여호수아', chapters: 24 },
+                { id: '삿', name: '사사기', chapters: 21 },
+                { id: '룻', name: '룻기', chapters: 4 },
+                { id: '삼상', name: '사무엘상', chapters: 31 },
+                { id: '삼하', name: '사무엘하', chapters: 24 },
+                { id: '왕상', name: '열왕기상', chapters: 22 },
+                { id: '왕하', name: '열왕기하', chapters: 25 },
+                { id: '대상', name: '역대상', chapters: 29 },
+                { id: '대하', name: '역대하', chapters: 36 },
+                { id: '스', name: '에스라', chapters: 10 },
+                { id: '느', name: '느헤미야', chapters: 13 },
+                { id: '에', name: '에스더', chapters: 10 },
+                { id: '욥', name: '욥기', chapters: 42 },
+                { id: '시', name: '시편', chapters: 150 },
+                { id: '잠', name: '잠언', chapters: 31 },
+                { id: '전', name: '전도서', chapters: 12 },
+                { id: '아', name: '아', chapters: 8 },
+                { id: '사', name: '이사야', chapters: 66 },
+                { id: '렘', name: '예레미야', chapters: 52 },
+                { id: '애', name: '에레미야애가', chapters: 5 },
+                { id: '겔', name: '에스겔', chapters: 48 },
+                { id: '단', name: '다니엘', chapters: 12 },
+                { id: '호', name: '호세아', chapters: 14 },
+                { id: '욜', name: '요엘', chapters: 3 },
+                { id: '암', name: '아모스', chapters: 9 },
+                { id: '옵', name: '오바댜', chapters: 1 },
+                { id: '욘', name: '요나', chapters: 4 },
+                { id: '미', name: '미가', chapters: 7 },
+                { id: '나', name: '나훔', chapters: 3 },
+                { id: '합', name: '하박국', chapters: 3 },
+                { id: '습', name: '스바냐', chapters: 3 },
+                { id: '학', name: '학개', chapters: 2 },
+                { id: '슥', name: '스가랴', chapters: 14 },
+                { id: '말', name: '말라기', chapters: 4 }]
+        };
+
+        // 1. (좌측) QT 묵상 링크
+        const CONTENT_LINKS = {
+            '마_1': 'https://docs.google.com/document/d/YOUR_DOC_ID_FOR_MATTHEW_1/edit?usp=sharing',
+            '왕상_14': './qt_files/ki1_14.html',
+            // ...
+        };
+
+        // 2. (우측) 성경 본문 링크
+        const BIBLE_LINKS = {
+            '마_1': 'https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=mat&chap=1&sec=1&cVersion=&fontSize=15px&fontWeight=normal',
+            '왕상_14': 'https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=1ki&chap=14&sec=1&cVersion=&fontSize=15px&fontWeight=normal',
+            // (성서공회 링크 대신 구글 문서로 직접 만드신 링크를 넣어주세요)
+            // ...
+        };
+
+
+        // --- 2. HTML 요소(Element) 가져오기 (수정됨) ---
+        const row2buttons = document.querySelectorAll('.menu-toggle');
+        const row3Container = document.getElementById('row3-container');
+        const newTestamentList = document.getElementById('new-testament-books');
+        const oldTestamentList = document.getElementById('old-testament-books');
+        const chapterListAside = document.getElementById('chapter-list');
+
+        // [수정] main-content 내부 요소들
+        const mainContent = document.getElementById('main-content');
+        const qtPane = document.getElementById('qt-pane');
+        const biblePane = document.getElementById('bible-pane');
+        const resizer = document.getElementById('resizer');
+        const qtFrame = document.getElementById('qt-frame');
+        const bibleFrame = document.getElementById('bible-frame');
+        const qtPaneP = qtPane.querySelector('p');
+        const biblePaneP = biblePane.querySelector('p');
+
+
+        // --- 3. 함수 정의 ---
+
+        // 3열 책 목록 생성 함수 (변경 없음)
+        function populateBookLists() {
+            BIBLE_DATA.newTestament.forEach(book => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'book-link';
+                link.textContent = book.id;
+                link.dataset.bookId = book.id;
+                link.dataset.bookType = 'new';
+                newTestamentList.appendChild(link);
+            });
+            BIBLE_DATA.oldTestament.forEach(book => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'book-link';
+                link.textContent = book.id;
+                link.dataset.bookId = book.id;
+                link.dataset.bookType = 'old';
+                oldTestamentList.appendChild(link);
+            });
+        }
+
+        // 2열 메뉴(신약/구약) 클릭 처리 (변경 없음)
+        function handleTestamentClick(event) {
+            const clickedButton = event.target;
+            const targetListId = clickedButton.dataset.target === 'new' ? 'new-testament-books' : 'old-testament-books';
+            const targetList = document.getElementById(targetListId);
+
+            if (clickedButton.classList.contains('active')) {
+                clickedButton.classList.remove('active');
+                row3Container.classList.remove('open');
+                targetList.classList.remove('active');
+                return;
+            }
+
+            row2buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.book-list-wrapper').forEach(list => list.classList.remove('active'));
+
+            clickedButton.classList.add('active');
+            targetList.classList.add('active');
+            row3Container.classList.add('open');
+        }
+
+        // 3열 책(예: 마, 창) 클릭 처리 (변경 없음 - 첫 번째 버전과 동일)
+        function handleBookClick(event) {
+            if (!event.target.classList.contains('book-link')) {
+                return;
+            }
+            event.preventDefault();
+
+            document.querySelectorAll('.book-link.active').forEach(link => link.classList.remove('active'));
+            const clickedBookLink = event.target;
+            clickedBookLink.classList.add('active');
+
+            const bookId = clickedBookLink.dataset.bookId;
+            const bookType = clickedBookLink.dataset.bookType;
+
+            const bookData = BIBLE_DATA[bookType === 'new' ? 'newTestament' : 'oldTestament'].find(
+                (book) => book.id === bookId
+            );
+
+            if (bookData) {
+                generateChapterList(bookData);
+            }
+        }
+
+        // [수정됨] Aside에 장(Chapter) 목록 생성 함수
+        function generateChapterList(bookData) {
+            let html = `<h3>${bookData.name}</h3><ul>`;
+
+            for (let i = 1; i <= bookData.chapters; i++) {
+
+                // [추가] 각 장(chapter)별로 링크가 있는지 확인
+                const linkKey = `${bookData.id}_${i}`;
+                const hasQtLink = CONTENT_LINKS[linkKey];
+                const hasBibleLink = BIBLE_LINKS[linkKey];
+
+                // [추가] QT 링크 또는 성경 링크 둘 중 하나라도 있으면 'available' 클래스 적용
+                const isAvailable = hasQtLink || hasBibleLink;
+                const availabilityClass = isAvailable ? 'available' : 'unavailable';
+
+                // [수정] <a> 태그에 위에서 만든 availabilityClass를 추가
+                html += `
+                <li>
+                    <a href="#" class="chapter-link ${availabilityClass}" data-book-id="${bookData.id}" data-chapter-num="${i}">
+                        ${bookData.name} ${i}장
+                    </a>
+                </li>
+                `;
+            }
+
+            html += '</ul>';
+            chapterListAside.innerHTML = html;
+        }
+
+
+        // [수정됨] Aside 장(Chapter) 클릭 처리
+        function handleChapterClick(event) {
+            if (!event.target.classList.contains('chapter-link')) {
+                return;
+            }
+            event.preventDefault();
+
+            // [추가] 만약 .unavailable 클래스를 가진 링크가 클릭되면 아무것도 하지 않음
+            // (CSS에서 pointer-events: none; 을 사용하지 않을 경우를 대비)
+            if (event.target.classList.contains('unavailable')) {
+                // 클릭은 되지만, 'active' 클래스도 주지 않고, 프레임 로드도 하지 않음
+                // return; // 클릭 자체는 활성화하되, 로드는 안 하려면 이 줄을 주석 처리
+            }
+
+
+            document.querySelectorAll('.chapter-link.active').forEach(link => link.classList.remove('active'));
+            const clickedChapterLink = event.target;
+            clickedChapterLink.classList.add('active');
+
+            const bookId = clickedChapterLink.dataset.bookId;
+            const chapterNum = clickedChapterLink.dataset.chapterNum;
+            const linkKey = `${bookId}_${chapterNum}`;
+
+            // --- 1. 좌측 QT 프레임 설정 ---
+            const qtContentUrl = CONTENT_LINKS[linkKey];
+            if (qtContentUrl) {
+                qtFrame.src = qtContentUrl;
+                qtFrame.classList.add('loaded');
+                if (qtPaneP) qtPaneP.style.display = 'none';
+            } else {
+                qtFrame.src = '';
+                qtFrame.classList.remove('loaded');
+                if (qtPaneP) {
+                    qtPaneP.textContent = `QT(${linkKey}) 콘텐츠가 준비되지 않았습니다.`;
+                    qtPaneP.style.display = 'block';
+                }
+            }
+
+            // --- 2. 우측 성경 프레임 설정 ---
+            const bibleContentUrl = BIBLE_LINKS[linkKey];
+            if (bibleContentUrl) {
+                bibleFrame.src = bibleContentUrl;
+                bibleFrame.classList.add('loaded');
+                if (biblePaneP) biblePaneP.style.display = 'none';
+            } else {
+                bibleFrame.src = '';
+                bibleFrame.classList.remove('loaded');
+                if (biblePaneP) {
+                    biblePaneP.textContent = `성경(${linkKey}) 본문이 준비되지 않았습니다.`;
+                    biblePaneP.style.display = 'block';
+                }
+            }
+        }
+
+
+        // --- 4. [신규] 리사이저(Resizer) 로직 ---
+        function initResizer(resizerEl, leftPaneEl) {
+            let startX, startWidth;
+
+            function handleMouseDown(e) {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                startX = e.clientX;
+                startWidth = leftPaneEl.offsetWidth;
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                document.body.classList.add('is-resizing');
+            }
+
+            function handleMouseMove(e) {
+                e.preventDefault();
+                const dx = e.clientX - startX;
+                const newLeftWidth = startWidth + dx;
+                const parentWidth = mainContent.offsetWidth;
+                const minWidth = 150;
+                const maxWidth = parentWidth - 150 - resizerEl.offsetWidth;
+
+                if (newLeftWidth > minWidth && newLeftWidth < maxWidth) {
+                    leftPaneEl.style.flexBasis = newLeftWidth + 'px';
+                }
+            }
+
+            function handleMouseUp(e) {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                document.body.classList.remove('is-resizing');
+            }
+
+            resizerEl.addEventListener('mousedown', handleMouseDown);
+        }
+
+
+        // --- 5. 이벤트 리스너(Event Listener) 등록 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 3열(책 목록)을 동적으로 채움
+            populateBookLists();
+
+            // 2. 2열(신약/구약) 버튼에 클릭 이벤트 추가
+            row2buttons.forEach(button => {
+                button.addEventListener('click', handleTestamentClick);
+            });
+
+            // 3. 3열 컨테이너에 이벤트 위임 (책 클릭)
+            row3Container.addEventListener('click', handleBookClick);
+
+            // 4. Aside(장 목록) 컨테이너에 이벤트 위임 (장 클릭)
+            chapterListAside.addEventListener('click', handleChapterClick);
+
+            // 5. [신규] 리사이저 기능 활성화
+            initResizer(resizer, qtPane);
+        });
+    </script>
+
+</body>
+
+</html>
